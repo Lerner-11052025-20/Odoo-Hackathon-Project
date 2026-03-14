@@ -1,5 +1,5 @@
 const Warehouse = require('../models/Warehouse');
-const Location  = require('../models/Location');
+const Location = require('../models/Location');
 const { createNotification } = require('./notificationController');
 
 /* ─────────────────────────────────────────
@@ -11,11 +11,13 @@ exports.getWarehouses = async (req, res, next) => {
   try {
     const { search = '' } = req.query;
     const filter = search
-      ? { $or: [
-          { name:    { $regex: search, $options: 'i' } },
-          { code:    { $regex: search, $options: 'i' } },
+      ? {
+        $or: [
+          { name: { $regex: search, $options: 'i' } },
+          { code: { $regex: search, $options: 'i' } },
           { address: { $regex: search, $options: 'i' } },
-        ]}
+        ]
+      }
       : {};
 
     const warehouses = await Warehouse.find(filter).sort({ createdAt: -1 }).lean();
@@ -58,11 +60,13 @@ exports.createWarehouse = async (req, res, next) => {
     const { name, code, address } = req.body;
     if (!name || !code) return res.status(400).json({ success: false, message: 'Name and Code are required.' });
 
+
+    // this is how getting us
     const existing = await Warehouse.findOne({ code: code.toUpperCase() });
     if (existing) return res.status(409).json({ success: false, message: `Code "${code.toUpperCase()}" already exists.` });
 
     const warehouse = await Warehouse.create({ name, code, address });
-    
+
     await createNotification({
       title: 'Warehouse Created',
       message: `Warehouse "${warehouse.name}" (${warehouse.code}) was established.`,
@@ -73,7 +77,7 @@ exports.createWarehouse = async (req, res, next) => {
       onModel: 'Warehouse',
       createdBy: req.user ? req.user._id : null
     });
-    
+
     res.status(201).json({ success: true, data: { ...warehouse.toObject(), locationCount: 0 } });
   } catch (err) {
     next(err);
