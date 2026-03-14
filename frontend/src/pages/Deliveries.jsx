@@ -7,17 +7,29 @@ import { useAuth } from '../context/AuthContext';
 import DeliveryTable from '../components/Operations/DeliveryTable';
 import OperationModal from '../components/Operations/OperationModal';
 import OperationKanban from '../components/Operations/OperationKanban';
+import DocumentViewerModal from '../components/Operations/DocumentViewerModal';
 
 const Deliveries = () => {
   const { user } = useAuth();
   const isManager = user?.role === 'inventory_manager';
-  const { operations: deliveries, isLoading, fetchOperations, createOperation, validateOperation, updateOperation } = useOperations('deliveries');
+  const { operations: deliveries, isLoading, fetchOperations, createOperation, validateOperation, updateOperation, deleteOperation } = useOperations('deliveries');
+  const [editingDelivery, setEditingDelivery] = useState(null);
   const [viewMode, setViewMode] = useState('list');
   const [modalOpen, setModalOpen] = useState(false);
+  const [viewerState, setViewerState] = useState({ isOpen: false, operationId: null, mode: 'view' });
 
   useEffect(() => {
     fetchOperations();
   }, [fetchOperations]);
+
+  const handleOpenViewer = (delivery, mode = 'view') => {
+    setViewerState({ isOpen: true, operationId: delivery._id, mode });
+  };
+
+  const handleEdit = (delivery) => {
+    setEditingDelivery(delivery);
+    setModalOpen(true);
+  };
 
   return (
     <MainLayout>
@@ -62,7 +74,14 @@ const Deliveries = () => {
         {isLoading ? (
           <div className="flex justify-center p-20"><div className="w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div></div>
         ) : viewMode === 'list' ? (
-          <DeliveryTable deliveries={deliveries} isManager={isManager} onValidate={validateOperation} />
+          <DeliveryTable 
+            deliveries={deliveries} 
+            isManager={isManager} 
+            onValidate={validateOperation} 
+            onView={handleOpenViewer}
+            onEdit={handleEdit}
+            onDelete={deleteOperation}
+          />
         ) : (
           <OperationKanban 
             operations={deliveries} 
@@ -79,9 +98,19 @@ const Deliveries = () => {
         {/* Create Delivery Modal */}
         <OperationModal 
           isOpen={modalOpen} 
-          onClose={() => setModalOpen(false)} 
+          onClose={() => { setModalOpen(false); setEditingDelivery(null); }} 
           type="delivery" 
-          onSubmit={createOperation} 
+          onSubmit={editingDelivery ? (data) => updateOperation(editingDelivery._id, data) : createOperation} 
+          initialData={editingDelivery}
+        />
+
+        {/* Document Viewer Modal */}
+        <DocumentViewerModal 
+          isOpen={viewerState.isOpen}
+          onClose={() => setViewerState({ ...viewerState, isOpen: false })}
+          operationId={viewerState.operationId}
+          type="delivery"
+          mode={viewerState.mode}
         />
       </motion.div>
     </MainLayout>

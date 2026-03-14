@@ -7,17 +7,29 @@ import { useAuth } from '../context/AuthContext';
 import ReceiptsTable from '../components/Operations/ReceiptsTable';
 import OperationModal from '../components/Operations/OperationModal';
 import OperationKanban from '../components/Operations/OperationKanban';
+import DocumentViewerModal from '../components/Operations/DocumentViewerModal';
 
 const Receipts = () => {
   const { user } = useAuth();
   const isManager = user?.role === 'inventory_manager';
-  const { operations: receipts, isLoading, fetchOperations, createOperation, validateOperation, updateOperation } = useOperations('receipts');
+  const { operations: receipts, isLoading, fetchOperations, createOperation, validateOperation, updateOperation, deleteOperation } = useOperations('receipts');
+  const [editingReceipt, setEditingReceipt] = useState(null);
   const [viewMode, setViewMode] = useState('list'); // 'list' | 'kanban'
   const [modalOpen, setModalOpen] = useState(false);
+  const [viewerState, setViewerState] = useState({ isOpen: false, operationId: null, mode: 'view' });
 
   useEffect(() => {
     fetchOperations();
   }, [fetchOperations]);
+
+  const handleOpenViewer = (receipt, mode = 'view') => {
+    setViewerState({ isOpen: true, operationId: receipt._id, mode });
+  };
+
+  const handleEdit = (receipt) => {
+    setEditingReceipt(receipt);
+    setModalOpen(true);
+  };
 
   return (
     <MainLayout>
@@ -62,7 +74,14 @@ const Receipts = () => {
         {isLoading ? (
           <div className="flex justify-center p-20"><div className="w-8 h-8 border-4 border-emerald-500 border-t-transparent rounded-full animate-spin"></div></div>
         ) : viewMode === 'list' ? (
-          <ReceiptsTable receipts={receipts} isManager={isManager} onValidate={validateOperation} />
+          <ReceiptsTable 
+            receipts={receipts} 
+            isManager={isManager} 
+            onValidate={validateOperation} 
+            onView={handleOpenViewer}
+            onEdit={handleEdit}
+            onDelete={deleteOperation}
+          />
         ) : (
           <OperationKanban 
             operations={receipts} 
@@ -79,9 +98,19 @@ const Receipts = () => {
         {/* Create Receipt Modal */}
         <OperationModal 
           isOpen={modalOpen} 
-          onClose={() => setModalOpen(false)} 
+          onClose={() => { setModalOpen(false); setEditingReceipt(null); }} 
           type="receipt" 
-          onSubmit={createOperation} 
+          onSubmit={editingReceipt ? (data) => updateOperation(editingReceipt._id, data) : createOperation} 
+          initialData={editingReceipt}
+        />
+
+        {/* Document Viewer Modal */}
+        <DocumentViewerModal 
+          isOpen={viewerState.isOpen}
+          onClose={() => setViewerState({ ...viewerState, isOpen: false })}
+          operationId={viewerState.operationId}
+          type="receipt"
+          mode={viewerState.mode}
         />
       </motion.div>
     </MainLayout>

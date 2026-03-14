@@ -1,8 +1,8 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { Edit2, CheckCircle, Trash2, Eye, Package } from 'lucide-react';
+import { Edit2, CheckCircle, Trash2, Eye, Package, Printer, Download } from 'lucide-react';
 
-const ReceiptsTable = ({ receipts, isManager, onEdit, onValidate, onDelete }) => {
+const ReceiptsTable = ({ receipts, isManager, onEdit, onValidate, onDelete, onView }) => {
   const getStatusBadge = (status) => {
     switch (status) {
       case 'Draft': return 'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-400';
@@ -49,9 +49,27 @@ const ReceiptsTable = ({ receipts, isManager, onEdit, onValidate, onDelete }) =>
                   </span>
                 </td>
                 <td className="py-4 px-6 text-center">
-                  <div className="flex items-center justify-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                    <button className="p-1.5 text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 rounded-lg">
+                  <div className="flex items-center justify-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <button 
+                      onClick={() => onView(receipt, 'view')}
+                      className="p-1.5 text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 rounded-lg"
+                      title="View Document"
+                    >
                       <Eye size={18} />
+                    </button>
+                    <button 
+                      onClick={() => onView(receipt, 'print')}
+                      className="p-1.5 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 rounded-lg"
+                      title="Print"
+                    >
+                      <Printer size={18} />
+                    </button>
+                    <button 
+                      onClick={() => onView(receipt, 'download')}
+                      className="p-1.5 text-slate-400 hover:text-emerald-600 dark:hover:text-emerald-400 rounded-lg"
+                      title="Download PDF"
+                    >
+                      <Download size={18} />
                     </button>
                     {isManager && receipt.status !== 'Done' && (
                       <>

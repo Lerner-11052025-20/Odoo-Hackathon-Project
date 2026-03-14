@@ -4,7 +4,7 @@ import { X, Plus, Trash2, Loader2, Save } from 'lucide-react';
 import api from '../../utils/api';
 import toast from 'react-hot-toast';
 
-const OperationModal = ({ isOpen, onClose, type, onSubmit }) => {
+const OperationModal = ({ isOpen, onClose, type, onSubmit, initialData }) => {
   const [loading, setLoading] = useState(false);
   const [fetchingProducts, setFetchingProducts] = useState(false);
   const [availableProducts, setAvailableProducts] = useState([]);
@@ -29,16 +29,31 @@ const OperationModal = ({ isOpen, onClose, type, onSubmit }) => {
   useEffect(() => {
     if (isOpen) {
       fetchProducts();
-      // Reset form on open
-      setFormData({
-        partner: '',
-        warehouse: 'Main Warehouse',
-        scheduledDate: new Date().toISOString().split('T')[0]
-      });
-      setSelectedProducts([]);
+      
+      if (initialData) {
+        setFormData({
+          partner: initialData.supplier || initialData.customer || '',
+          warehouse: initialData.warehouse,
+          scheduledDate: initialData.scheduledDate ? new Date(initialData.scheduledDate).toISOString().split('T')[0] : new Date().toISOString().split('T')[0]
+        });
+        setSelectedProducts(initialData.products.map(p => ({
+          product: p.product._id || p.product,
+          quantity: p.quantity,
+          expectedQuantity: p.expectedQuantity || 0,
+          countedQuantity: p.countedQuantity || 0
+        })));
+      } else {
+        // Reset form on open for new creation
+        setFormData({
+          partner: '',
+          warehouse: 'Main Warehouse',
+          scheduledDate: new Date().toISOString().split('T')[0]
+        });
+        setSelectedProducts([]);
+      }
       setSubmitError('');
     }
-  }, [isOpen]);
+  }, [isOpen, initialData]);
 
   const fetchProducts = async () => {
     setFetchingProducts(true);
@@ -160,7 +175,7 @@ const OperationModal = ({ isOpen, onClose, type, onSubmit }) => {
           {/* Header */}
           <div className="px-6 py-4 border-b border-slate-100 dark:border-slate-800 flex justify-between items-center bg-slate-50 dark:bg-slate-800/50">
             <h2 className="text-lg font-bold text-slate-900 dark:text-white">
-              {config[type].title}
+              {initialData ? `Edit ${config[type].title.replace('New ', '')}` : config[type].title}
             </h2>
             <button onClick={onClose} className="p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 rounded-full transition-colors">
               <X size={20} />
@@ -355,7 +370,7 @@ const OperationModal = ({ isOpen, onClose, type, onSubmit }) => {
               className="px-6 py-2 text-sm font-bold text-white bg-primary-600 hover:bg-primary-700 disabled:opacity-50 disabled:cursor-not-allowed rounded-xl transition-all flex items-center gap-2 shadow-sm shadow-primary-500/30"
             >
               {loading ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
-              {config[type].action}
+              {initialData ? 'Update Operation' : config[type].action}
             </button>
           </div>
 

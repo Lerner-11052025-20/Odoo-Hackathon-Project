@@ -13,6 +13,7 @@ router.route('/receipts')
   .post(authorize('inventory_manager'), operationsController.createReceipt);
 
 router.route('/receipts/:id')
+  .get(operationsController.getReceiptById)
   .put(authorize('inventory_manager'), operationsController.updateReceipt)
   .delete(authorize('inventory_manager'), operationsController.deleteReceipt);
 
@@ -24,6 +25,7 @@ router.route('/deliveries')
   .post(authorize('inventory_manager'), operationsController.createDelivery);
 
 router.route('/deliveries/:id')
+  .get(operationsController.getDeliveryById)
   .put(authorize('inventory_manager'), operationsController.updateDelivery);
   // Optional delete
 

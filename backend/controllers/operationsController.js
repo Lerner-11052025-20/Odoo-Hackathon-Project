@@ -43,6 +43,16 @@ exports.getReceipts = async (req, res, next) => {
   } catch (error) { next(error); }
 };
 
+exports.getReceiptById = async (req, res, next) => {
+  try {
+    const receipt = await Receipt.findById(req.params.id)
+      .populate('products.product', 'name sku unit')
+      .populate('createdBy', 'name loginId');
+    if (!receipt) return res.status(404).json({ success: false, message: 'Receipt not found' });
+    res.status(200).json({ success: true, data: receipt });
+  } catch (error) { next(error); }
+};
+
 exports.createReceipt = async (req, res, next) => {
   try {
     const receipt = await Receipt.create({
@@ -139,6 +149,16 @@ exports.getDeliveries = async (req, res, next) => {
   try {
     const deliveries = await Delivery.find().populate('products.product', 'name sku unit').sort({ createdAt: -1 });
     res.status(200).json({ success: true, data: deliveries });
+  } catch (error) { next(error); }
+};
+
+exports.getDeliveryById = async (req, res, next) => {
+  try {
+    const delivery = await Delivery.findById(req.params.id)
+      .populate('products.product', 'name sku unit')
+      .populate('createdBy', 'name loginId');
+    if (!delivery) return res.status(404).json({ success: false, message: 'Delivery not found' });
+    res.status(200).json({ success: true, data: delivery });
   } catch (error) { next(error); }
 };
 
