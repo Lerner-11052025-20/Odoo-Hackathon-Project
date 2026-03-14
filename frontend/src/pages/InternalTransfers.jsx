@@ -96,46 +96,65 @@ const InternalTransfers = () => {
         {/* Header */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div className="flex items-center gap-4">
-            <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-indigo-500 to-blue-600 flex items-center justify-center shadow-lg shadow-indigo-500/25 shrink-0">
+            <div className="w-12 h-12 rounded-[14px] bg-indigo-500 dark:bg-indigo-600 flex items-center justify-center shadow-sm shrink-0">
               <ArrowRightLeft size={22} className="text-white" />
             </div>
             <div>
-              <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Internal Transfers</h1>
-              <p className="text-sm text-slate-500 dark:text-slate-400 mt-0.5">Move stock between warehouses and locations.</p>
+              <h1 className="text-xl font-bold text-slate-900 dark:text-white">Internal Transfers</h1>
+              <p className="text-[13px] text-slate-500 dark:text-slate-400 mt-0.5">Move stock between warehouses and locations.</p>
             </div>
           </div>
 
-          <div className="flex items-center gap-3 flex-wrap">
+          <div className="flex items-center gap-3 w-full md:w-auto">
             {/* View Toggle */}
-            <div className="flex bg-slate-100 dark:bg-slate-800 p-1 rounded-xl">
-              <button onClick={() => setViewMode('list')} className={`p-1.5 rounded-lg flex items-center gap-1.5 transition-all text-xs font-bold px-3 ${viewMode === 'list' ? 'bg-white dark:bg-slate-700 shadow-sm text-slate-900 dark:text-white' : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'}`}>
+            <div className="flex bg-slate-100 dark:bg-slate-800 p-1 rounded-[10px] shrink-0">
+              <button 
+                onClick={() => setViewMode('list')} 
+                className={`py-1.5 px-3 rounded-md flex items-center gap-1.5 transition-all text-[13px] font-semibold ${viewMode === 'list' ? 'bg-white dark:bg-slate-700 shadow-sm text-slate-800 dark:text-white' : 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-300'}`}
+              >
                 <LayoutList size={14} /> List
               </button>
-              <button onClick={() => setViewMode('kanban')} className={`p-1.5 rounded-lg flex items-center gap-1.5 transition-all text-xs font-bold px-3 ${viewMode === 'kanban' ? 'bg-white dark:bg-slate-700 shadow-sm text-slate-900 dark:text-white' : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'}`}>
+              <button 
+                onClick={() => setViewMode('kanban')} 
+                className={`py-1.5 px-3 rounded-md flex items-center gap-1.5 transition-all text-[13px] font-semibold ${viewMode === 'kanban' ? 'bg-white dark:bg-slate-700 shadow-sm text-slate-800 dark:text-white' : 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-300'}`}
+              >
                 <Layers size={14} /> Kanban
               </button>
             </div>
 
             {/* Filter */}
-            <div className="relative">
-              <Building2 size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
-              <ChevronDown size={13} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
-              <select className="auth-input !py-2 pl-9 pr-8 !w-auto min-w-[160px] text-sm appearance-none cursor-pointer" value={whFilter} onChange={e => handleWarehouseFilter(e.target.value)}>
+            <div className="relative shrink-0">
+              <Building2 size={14} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+              <ChevronDown size={14} className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+              <select 
+                className="bg-transparent border border-slate-200 dark:border-slate-700 rounded-xl py-2 pl-9 pr-10 text-[13px] font-medium text-slate-700 dark:text-slate-300 appearance-none focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all cursor-pointer min-w-[170px]" 
+                value={whFilter} 
+                onChange={e => handleWarehouseFilter(e.target.value)}
+              >
                 <option value="">All Warehouses</option>
                 {warehouses.map(w => <option key={w._id} value={w.name}>{w.name}</option>)}
               </select>
             </div>
 
             {/* Search */}
-            <div className="relative">
-              <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-              <input className="auth-input !py-2 pl-9 pr-8 !w-[180px] focus:!w-[240px] transition-all duration-300 text-sm" placeholder="Search..." value={search} onChange={e => handleSearch(e.target.value)} />
-              {search && <button onClick={() => handleSearch('')} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"><X size={12} /></button>}
+            <div className="relative shrink-0 flex-1 md:flex-none">
+              <Search size={14} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
+              <input 
+                className="w-full bg-transparent border border-slate-200 dark:border-slate-700 rounded-xl py-2 pl-9 pr-8 text-[13px] font-medium text-slate-700 dark:text-slate-300 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all md:w-[190px] md:focus:w-[220px]" 
+                placeholder="Search..." 
+                value={search} 
+                onChange={e => handleSearch(e.target.value)} 
+              />
+              {search && <button onClick={() => handleSearch('')} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"><X size={12} /></button>}
             </div>
 
             {/* Manager Create */}
             {isManager && (
-              <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.97 }} onClick={() => { setEditTarget(null); setFormModal(true); }} className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-indigo-600 to-blue-600 hover:from-indigo-700 hover:to-blue-700 text-white rounded-xl font-semibold shadow-md shadow-indigo-500/25 transition-all text-sm whitespace-nowrap">
+              <motion.button 
+                whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.97 }} 
+                onClick={() => { setEditTarget(null); setFormModal(true); }} 
+                className="shrink-0 flex items-center justify-center gap-1.5 px-4 py-2 bg-indigo-500 hover:bg-indigo-600 dark:bg-indigo-600 dark:hover:bg-indigo-700 text-white rounded-xl shadow-sm transition-all text-[13px] font-semibold h-[38px]"
+              >
                 <Plus size={16} /> New Transfer
               </motion.button>
             )}
