@@ -2,6 +2,7 @@ const Product = require('../models/Product');
 const Receipt = require('../models/Receipt');
 const Delivery = require('../models/Delivery');
 const Adjustment = require('../models/Adjustment');
+const Transfer = require('../models/Transfer');
 
 exports.getKPIs = async (req, res, next) => {
   try {
@@ -16,7 +17,7 @@ exports.getKPIs = async (req, res, next) => {
     const pendingDeliveries = await Delivery.countDocuments({ status: { $in: ['Waiting', 'Ready'] } });
     const completedDeliveries = await Delivery.countDocuments({ status: 'Done' });
     
-    const internalTransfers = await Adjustment.countDocuments({ status: { $in: ['Draft', 'Validated'] } });
+    const internalTransfers = await Transfer.countDocuments({ status: { $in: ['Draft', 'Ready', 'In Progress'] } });
 
     // Late Deliveries (Mock for now as we don't have strict scheduling comparison, or check if scheduledDate < today)
     const today = new Date();
@@ -57,15 +58,27 @@ exports.getActivity = async (req, res, next) => {
     const today = new Date();
     today.setHours(23, 59, 59, 999);
     
+    
+    const toLocalDateStr = (dateObj) => {
+      const d = new Date(dateObj);
+      const yyyy = d.getFullYear();
+      let mm = d.getMonth() + 1;
+      let dd = d.getDate();
+      if (mm < 10) mm = '0' + mm;
+      if (dd < 10) dd = '0' + dd;
+      return `${yyyy}-${mm}-${dd}`;
+    };
+
     const activityData = [];
     for (let i = 6; i >= 0; i--) {
       const d = new Date(today);
       d.setDate(d.getDate() - i);
       activityData.push({
         name: days[d.getDay()],
-        dateStr: d.toISOString().split('T')[0],
+        dateStr: toLocalDateStr(d),
         in: 0,
         out: 0,
+        internal: 0,
         amt: 0
       });
     }
@@ -81,7 +94,7 @@ exports.getActivity = async (req, res, next) => {
     });
 
     receipts.forEach(r => {
-      const rDate = new Date(r.updatedAt).toISOString().split('T')[0];
+      const rDate = toLocalDateStr(r.updatedAt);
       const targetDay = activityData.find(d => d.dateStr === rDate);
       if (targetDay) {
         const totalQty = r.products.reduce((acc, p) => acc + (p.quantity || 0), 0);
@@ -97,11 +110,26 @@ exports.getActivity = async (req, res, next) => {
     });
 
     deliveries.forEach(d => {
-      const dDate = new Date(d.updatedAt).toISOString().split('T')[0];
+      const dDate = toLocalDateStr(d.updatedAt);
       const targetDay = activityData.find(day => day.dateStr === dDate);
       if (targetDay) {
         const totalQty = d.products.reduce((acc, p) => acc + (p.quantity || 0), 0);
         targetDay.out += totalQty;
+      }
+    });
+
+    // Fetch Done Transfers in last 7 days
+    const transfers = await Transfer.find({
+      status: 'Done',
+      updatedAt: { $gte: sevenDaysAgo }
+    });
+    
+    transfers.forEach(t => {
+      const tDate = toLocalDateStr(t.updatedAt);
+      const targetDay = activityData.find(day => day.dateStr === tDate);
+      if (targetDay) {
+        const totalQty = t.quantity || 0;
+        targetDay.internal += totalQty;
       }
     });
 
@@ -113,10 +141,11 @@ exports.getActivity = async (req, res, next) => {
 
 exports.getRecentOperations = async (req, res, next) => {
   try {
-    const [receipts, deliveries, adjustments] = await Promise.all([
+    const [receipts, deliveries, adjustments, transfers] = await Promise.all([
       Receipt.find().sort({ createdAt: -1 }).limit(3).populate('products.product', 'name'),
       Delivery.find().sort({ createdAt: -1 }).limit(3).populate('products.product', 'name'),
-      Adjustment.find().sort({ createdAt: -1 }).limit(3).populate('products.product', 'name')
+      Adjustment.find().sort({ createdAt: -1 }).limit(3).populate('products.product', 'name'),
+      Transfer.find().sort({ createdAt: -1 }).limit(3).populate('product', 'name')
     ]);
 
     const formattedReceipts = receipts.map(r => ({
@@ -148,8 +177,18 @@ exports.getRecentOperations = async (req, res, next) => {
       status: a.status,
       timestamp: a.createdAt
     }));
+    
+    const formattedTransfers = transfers.map(t => ({
+      id: t.reference,
+      type: 'Transfer',
+      product: t.product?.name || 'Unknown Product',
+      warehouse: `${t.fromWarehouse} → ${t.toWarehouse}`,
+      quantity: t.quantity,
+      status: t.status,
+      timestamp: t.createdAt
+    }));
 
-    const recentOperations = [...formattedReceipts, ...formattedDeliveries, ...formattedAdjustments]
+    const recentOperations = [...formattedReceipts, ...formattedDeliveries, ...formattedAdjustments, ...formattedTransfers]
       .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp))
       .slice(0, 8);
 

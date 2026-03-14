@@ -18,8 +18,16 @@ const CustomTooltip = ({ active, payload, label }) => {
             <span className="text-xs text-slate-500 flex items-center gap-1">
               <span className="w-2 h-2 rounded-full bg-blue-500"></span> Outwards
             </span>
-            <span className="font-bold text-slate-900 dark:text-white">{payload[1].value}</span>
+            <span className="font-bold text-slate-900 dark:text-white">{payload[1]?.value}</span>
           </div>
+          {payload[2] && (
+            <div className="flex flex-col">
+              <span className="text-xs text-slate-500 flex items-center gap-1">
+                <span className="w-2 h-2 rounded-full bg-amber-500"></span> Transfers
+              </span>
+              <span className="font-bold text-slate-900 dark:text-white">{payload[2].value}</span>
+            </div>
+          )}
         </div>
       </div>
     );
@@ -60,6 +68,10 @@ const InventoryCharts = ({ data }) => {
                 <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.3}/>
                 <stop offset="95%" stopColor="#3b82f6" stopOpacity={0}/>
               </linearGradient>
+              <linearGradient id="colorInternal" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="5%" stopColor="#f59e0b" stopOpacity={0.3}/>
+                <stop offset="95%" stopColor="#f59e0b" stopOpacity={0}/>
+              </linearGradient>
             </defs>
             <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" opacity={0.3} className="dark:stroke-slate-700" />
             <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fill: '#64748b', fontSize: 12}} dy={10} />
@@ -82,6 +94,15 @@ const InventoryCharts = ({ data }) => {
               strokeWidth={3} 
               fillOpacity={1} 
               fill="url(#colorOut)" 
+              animationDuration={1500}
+            />
+            <Area 
+              type="monotone" 
+              dataKey="internal" 
+              stroke="#f59e0b" 
+              strokeWidth={3} 
+              fillOpacity={1} 
+              fill="url(#colorInternal)" 
               animationDuration={1500}
             />
           </AreaChart>

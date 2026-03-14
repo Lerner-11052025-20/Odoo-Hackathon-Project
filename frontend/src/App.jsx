@@ -13,7 +13,9 @@ const Operations = lazy(() => import('./pages/Operations'));
 const Receipts = lazy(() => import('./pages/Receipts'));
 const Deliveries = lazy(() => import('./pages/Deliveries'));
 const Adjustments = lazy(() => import('./pages/Adjustments'));
+const InternalTransfers = lazy(() => import('./pages/InternalTransfers'));
 const Warehouse   = lazy(() => import('./pages/Warehouse'));
+const Locations   = lazy(() => import('./pages/Locations'));
 
 const PageLoader = () => (
   <div className="min-h-screen flex items-center justify-center bg-slate-50 dark:bg-slate-950">
@@ -101,12 +103,32 @@ const App = () => {
                 }
               />
 
+              {/* Protected: Internal Transfers */}
+              <Route
+                path="/transfers"
+                element={
+                  <ProtectedRoute allowedRoles={['inventory_manager', 'warehouse_staff']}>
+                    <InternalTransfers />
+                  </ProtectedRoute>
+                }
+              />
+
               {/* Protected: Warehouse Management */}
               <Route
                 path="/warehouses"
                 element={
                   <ProtectedRoute allowedRoles={['inventory_manager', 'warehouse_staff']}>
                     <Warehouse />
+                  </ProtectedRoute>
+                }
+              />
+
+              {/* Protected: Location Management */}
+              <Route
+                path="/locations"
+                element={
+                  <ProtectedRoute allowedRoles={['inventory_manager', 'warehouse_staff']}>
+                    <Locations />
                   </ProtectedRoute>
                 }
               />

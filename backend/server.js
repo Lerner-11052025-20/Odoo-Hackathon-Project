@@ -8,6 +8,8 @@ const dashboardRoutes = require('./routes/dashboardRoutes');
 const productRoutes = require('./routes/productRoutes');
 const operationsRoutes = require('./routes/operationsRoutes');
 const warehouseRoutes  = require('./routes/warehouseRoutes');
+const locationRoutes   = require('./routes/locationRoutes');
+const transferRoutes   = require('./routes/transferRoutes');
 
 dotenv.config();
 
@@ -31,6 +33,8 @@ app.use('/api/dashboard', dashboardRoutes);
 app.use('/api/products', productRoutes);
 app.use('/api', operationsRoutes); // Registers /api/receipts /api/deliveries /api/adjustments
 app.use('/api/warehouses', warehouseRoutes);
+app.use('/api/locations',  locationRoutes);
+app.use('/api/transfers',  transferRoutes);
 
 // Health Check
 app.get('/api/health', (req, res) => {
