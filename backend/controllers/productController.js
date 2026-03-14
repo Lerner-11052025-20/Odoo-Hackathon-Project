@@ -1,4 +1,5 @@
 const Product = require('../models/Product');
+const { createNotification } = require('./notificationController');
 
 // @desc    Get all products
 // @route   GET /api/products
@@ -41,6 +42,17 @@ exports.createProduct = async (req, res, next) => {
     }
 
     const product = await Product.create(req.body);
+
+    await createNotification({
+      title: 'New Product Added',
+      message: `Product "${product.name}" (${product.sku}) was added to the catalog.`,
+      type: 'NEW_PRODUCT',
+      userRole: 'inventory_manager',
+      relatedModule: 'stock',
+      referenceId: product._id,
+      onModel: 'Product',
+      createdBy: req.user ? req.user._id : null
+    });
 
     res.status(201).json({ success: true, data: product });
   } catch (error) {

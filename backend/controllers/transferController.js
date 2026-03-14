@@ -1,5 +1,7 @@
 const Transfer = require('../models/Transfer');
 const Product  = require('../models/Product');
+const { createNotification } = require('./notificationController');
+const { syncMoves, updateMoveStatus, deleteMoves } = require('./moveController');
 
 const genRef = () => `TRF-${Math.floor(1000 + Math.random() * 9000)}-${Date.now().toString().slice(-4)}`;
 
@@ -87,6 +89,27 @@ exports.createTransfer = async (req, res, next) => {
       notes: notes || '',
     });
 
+    await syncMoves({
+      operationId: transfer._id,
+      reference: transfer.reference,
+      movementType: 'TRANSFER',
+      products: [{ product, quantity }],
+      status: transfer.status || 'Draft',
+      fromLocation: `${transfer.fromWarehouse} ${transfer.fromLocation ? `- ${transfer.fromLocation}` : ''}`.trim(),
+      toLocation: `${transfer.toWarehouse} ${transfer.toLocation ? `- ${transfer.toLocation}` : ''}`.trim(),
+      warehouse: transfer.fromWarehouse
+    });
+    
+    await createNotification({
+      title: 'Transfer Drafted',
+      message: `A stock transfer ${transfer.reference} was created from ${transfer.fromWarehouse} to ${transfer.toWarehouse}.`,
+      type: 'TRANSFER_COMPLETED',
+      relatedModule: 'transfers',
+      referenceId: transfer._id,
+      onModel: 'Transfer',
+      createdBy: req.user ? req.user._id : null
+    });
+
     const populated = await transfer.populate('product', 'name sku unit warehouse');
     res.status(201).json({ success: true, data: populated });
   } catch (err) { next(err); }
@@ -111,6 +134,17 @@ exports.updateTransfer = async (req, res, next) => {
       { new: true, runValidators: true }
     ).populate('product', 'name sku unit warehouse');
 
+    await syncMoves({
+      operationId: updated._id,
+      reference: updated.reference,
+      movementType: 'TRANSFER',
+      products: [{ product: updated.product, quantity: updated.quantity }],
+      status: updated.status,
+      fromLocation: `${updated.fromWarehouse} ${updated.fromLocation ? `- ${updated.fromLocation}` : ''}`.trim(),
+      toLocation: `${updated.toWarehouse} ${updated.toLocation ? `- ${updated.toLocation}` : ''}`.trim(),
+      warehouse: updated.fromWarehouse
+    });
+
     res.json({ success: true, data: updated });
   } catch (err) { next(err); }
 };
@@ -126,6 +160,7 @@ exports.deleteTransfer = async (req, res, next) => {
       return res.status(400).json({ success: false, message: 'Cannot delete a completed transfer.' });
     }
     await Transfer.findByIdAndDelete(req.params.id);
+    await deleteMoves(req.params.id);
     res.json({ success: true, message: 'Transfer deleted.' });
   } catch (err) { next(err); }
 };
@@ -163,10 +198,20 @@ exports.validateTransfer = async (req, res, next) => {
     transfer.validatedAt = new Date();
     await transfer.save();
 
-    const populated = await Transfer.findById(transfer._id)
-      .populate('product', 'name sku unit warehouse')
-      .populate('validatedBy', 'loginId');
+    await updateMoveStatus(transfer._id, 'Done');
 
     res.json({ success: true, data: populated });
+    
+    // Notification
+    await createNotification({
+      title: 'Internal Transfer Completed',
+      message: `Transfer ${transfer.reference} completed. ${transfer.quantity} ${prod.unit} of ${prod.name} moved to ${transfer.toWarehouse}.`,
+      type: 'TRANSFER_COMPLETED',
+      relatedModule: 'transfers',
+      referenceId: transfer._id,
+      onModel: 'Transfer',
+      createdBy: req.user ? req.user._id : null
+    });
+
   } catch (err) { next(err); }
 };

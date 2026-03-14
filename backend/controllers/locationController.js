@@ -1,5 +1,6 @@
 const Location  = require('../models/Location');
 const Warehouse = require('../models/Warehouse');
+const { createNotification } = require('./notificationController');
 
 /* ─────────────────────────────────────────────
    GET /api/locations
@@ -61,6 +62,17 @@ exports.createLocation = async (req, res, next) => {
 
     const location = await Location.create({ name, code, warehouse, description });
     const populated = await location.populate('warehouse', 'name code address');
+
+    await createNotification({
+      title: 'Location Added',
+      message: `Location "${location.name}" (${location.code}) was added to ${warehouseExists.name}.`,
+      type: 'LOCATION_ADDED',
+      userRole: 'inventory_manager',
+      relatedModule: 'locations',
+      referenceId: location._id,
+      onModel: 'Location',
+      createdBy: req.user ? req.user._id : null
+    });
 
     res.status(201).json({ success: true, data: populated });
   } catch (err) {

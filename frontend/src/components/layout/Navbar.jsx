@@ -4,6 +4,7 @@ import { Bell, Search, User, LogOut, Sun, Moon, Menu } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { useTheme } from '../../context/ThemeContext';
 import GlobalSearch from './GlobalSearch';
+import NotificationBell from '../Notifications/NotificationBell';
 
 const Navbar = ({ onMenuClick, isDesktopOpen, setIsDesktopOpen }) => {
   const { user, logout } = useAuth();
@@ -42,10 +43,7 @@ const Navbar = ({ onMenuClick, isDesktopOpen, setIsDesktopOpen }) => {
             {isDark ? <Sun size={20} /> : <Moon size={20} />}
           </button>
           
-          <button className="p-2 text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors relative">
-            <Bell size={20} />
-            <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full border border-white dark:border-slate-900 animate-pulse"></span>
-          </button>
+          <NotificationBell />
 
           {/* Profile Dropdown */}
           <div className="relative">

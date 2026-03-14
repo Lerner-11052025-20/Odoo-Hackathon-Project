@@ -1,5 +1,6 @@
 const Warehouse = require('../models/Warehouse');
 const Location  = require('../models/Location');
+const { createNotification } = require('./notificationController');
 
 /* ─────────────────────────────────────────
    WAREHOUSE CRUD
@@ -61,6 +62,18 @@ exports.createWarehouse = async (req, res, next) => {
     if (existing) return res.status(409).json({ success: false, message: `Code "${code.toUpperCase()}" already exists.` });
 
     const warehouse = await Warehouse.create({ name, code, address });
+    
+    await createNotification({
+      title: 'Warehouse Created',
+      message: `Warehouse "${warehouse.name}" (${warehouse.code}) was established.`,
+      type: 'WAREHOUSE_CREATED',
+      userRole: 'inventory_manager',
+      relatedModule: 'warehouses',
+      referenceId: warehouse._id,
+      onModel: 'Warehouse',
+      createdBy: req.user ? req.user._id : null
+    });
+    
     res.status(201).json({ success: true, data: { ...warehouse.toObject(), locationCount: 0 } });
   } catch (err) {
     next(err);
