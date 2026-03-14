@@ -10,7 +10,8 @@ const adjustmentSchema = new mongoose.Schema({
     countedQuantity: { type: Number, required: true },
     difference: { type: Number, required: true },
     reason: { type: String }
-  }]
+  }],
+  createdBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' }
 }, { timestamps: true });
 
 module.exports = mongoose.model('Adjustment', adjustmentSchema);

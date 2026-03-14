@@ -34,13 +34,21 @@ const DocumentViewerModal = ({ isOpen, onClose, operationId, type, mode = 'view'
   };
 
   useEffect(() => {
+    let timer;
     if (data && !loading && isOpen) {
-        if (mode === 'print') {
-            setTimeout(() => handlePrint(), 1000);
-        } else if (mode === 'download') {
-            setTimeout(() => handleDownload(), 1000);
-        }
+       // Wait for React to finish rendering the document into the DOM
+       timer = setTimeout(() => {
+         const element = document.getElementById('printable-document');
+         if (element) {
+           if (mode === 'print') {
+             handlePrint();
+           } else if (mode === 'download') {
+             handleDownload();
+           }
+         }
+       }, 500); // 500ms is usually enough after loading is false
     }
+    return () => clearTimeout(timer);
   }, [data, loading, mode, isOpen]);
 
   const handlePrint = useReactToPrint({
@@ -50,9 +58,19 @@ const DocumentViewerModal = ({ isOpen, onClose, operationId, type, mode = 'view'
 
   const handleDownload = async () => {
     if (!data) return;
+    const element = document.getElementById('printable-document');
+    if (!element) {
+        toast.error('Document not ready for download');
+        return;
+    }
+    
     toast.loading('Generating PDF...', { id: 'pdf-gen' });
-    await generatePDF('printable-document', data.reference);
-    toast.success('PDF Downloaded', { id: 'pdf-gen' });
+    try {
+        await generatePDF('printable-document', `${data.reference}_Document`);
+        toast.success('PDF Downloaded', { id: 'pdf-gen' });
+    } catch (err) {
+        toast.error('PDF Generation Failed', { id: 'pdf-gen' });
+    }
   };
 
   if (!isOpen) return null;

@@ -5,7 +5,19 @@ const api = axios.create({
   headers: { 'Content-Type': 'application/json' },
   timeout: 10000,
 });
-
+// Request interceptor to add token
+api.interceptors.request.use(
+  (config) => {
+    const token = localStorage.getItem('ci_token');
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+    return config;
+  },
+  (error) => {
+    return Promise.reject(error);
+  }
+);
 // Response interceptor for error handling
 api.interceptors.response.use(
   (res) => res,

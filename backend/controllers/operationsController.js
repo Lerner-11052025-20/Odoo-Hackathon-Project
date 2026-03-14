@@ -57,7 +57,8 @@ exports.createReceipt = async (req, res, next) => {
   try {
     const receipt = await Receipt.create({
       ...req.body,
-      reference: generateReference('REC')
+      reference: generateReference('REC'),
+      createdBy: req.user._id
     });
     
     await syncMoves({
@@ -167,7 +168,8 @@ exports.createDelivery = async (req, res, next) => {
     await validateStock(req.body.products, true);
     const delivery = await Delivery.create({
       ...req.body,
-      reference: generateReference('DEL')
+      reference: generateReference('DEL'),
+      createdBy: req.user._id
     });
     
     await syncMoves({
@@ -278,7 +280,8 @@ exports.createAdjustment = async (req, res, next) => {
   try {
     const adjustment = await Adjustment.create({
       ...req.body,
-      reference: generateReference('ADJ')
+      reference: generateReference('ADJ'),
+      createdBy: req.user._id
     });
 
     await syncMoves({
