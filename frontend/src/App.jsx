@@ -16,6 +16,7 @@ const Adjustments = lazy(() => import('./pages/Adjustments'));
 const InternalTransfers = lazy(() => import('./pages/InternalTransfers'));
 const Warehouse   = lazy(() => import('./pages/Warehouse'));
 const Locations   = lazy(() => import('./pages/Locations'));
+const Profile     = lazy(() => import('./pages/Profile'));
 
 const PageLoader = () => (
   <div className="min-h-screen flex items-center justify-center bg-slate-50 dark:bg-slate-950">
@@ -129,6 +130,16 @@ const App = () => {
                 element={
                   <ProtectedRoute allowedRoles={['inventory_manager', 'warehouse_staff']}>
                     <Locations />
+                  </ProtectedRoute>
+                }
+              />
+
+              {/* Protected: Profile Management */}
+              <Route
+                path="/profile"
+                element={
+                  <ProtectedRoute allowedRoles={['inventory_manager', 'warehouse_staff']}>
+                    <Profile />
                   </ProtectedRoute>
                 }
               />

@@ -10,6 +10,7 @@ const operationsRoutes = require('./routes/operationsRoutes');
 const warehouseRoutes  = require('./routes/warehouseRoutes');
 const locationRoutes   = require('./routes/locationRoutes');
 const transferRoutes   = require('./routes/transferRoutes');
+const userRoutes       = require('./routes/userRoutes');
 
 dotenv.config();
 
@@ -35,6 +36,7 @@ app.use('/api', operationsRoutes); // Registers /api/receipts /api/deliveries /a
 app.use('/api/warehouses', warehouseRoutes);
 app.use('/api/locations',  locationRoutes);
 app.use('/api/transfers',  transferRoutes);
+app.use('/api/users',      userRoutes);
 
 // Health Check
 app.get('/api/health', (req, res) => {

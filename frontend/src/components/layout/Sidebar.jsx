@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { NavLink } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Package, BarChart3, Truck, ArrowLeftRight, Settings, History, MapPin, Layers } from 'lucide-react';
+import { Package, BarChart3, Truck, ArrowLeftRight, Settings, History, MapPin, Layers, User } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 
 const Sidebar = ({ isMobileOpen, setIsMobileOpen, isDesktopOpen = true }) => {
@@ -16,7 +16,8 @@ const Sidebar = ({ isMobileOpen, setIsMobileOpen, isDesktopOpen = true }) => {
     { icon: History, label: 'Move History', path: '/history', show: true },
     { icon: MapPin,   label: 'Warehouses', path: '/warehouses', show: true },
     { icon: Layers,   label: 'Locations',  path: '/locations',  show: true },
-    { icon: Settings, label: 'Settings', path: '/settings', show: true },
+    { icon: User,     label: 'Profile',    path: '/profile',    show: true },
+    { icon: Settings, label: 'Settings',   path: '/settings',   show: true },
   ];
 
   const SidebarContent = () => (
