@@ -14,7 +14,7 @@ const Sidebar = ({ isMobileOpen, setIsMobileOpen, isDesktopOpen = true }) => {
     { icon: Truck, label: 'Operations', path: '/operations', show: true },
     { icon: ArrowLeftRight, label: 'Internal Transfers', path: '/transfers', show: true },
     { icon: History, label: 'Move History', path: '/history', show: true },
-    { icon: MapPin, label: 'Warehouses', path: '/warehouses', show: isManager },
+    { icon: MapPin, label: 'Warehouses', path: '/warehouses', show: true },
     { icon: Settings, label: 'Settings', path: '/settings', show: true },
   ];
 

@@ -13,6 +13,7 @@ const Operations = lazy(() => import('./pages/Operations'));
 const Receipts = lazy(() => import('./pages/Receipts'));
 const Deliveries = lazy(() => import('./pages/Deliveries'));
 const Adjustments = lazy(() => import('./pages/Adjustments'));
+const Warehouse   = lazy(() => import('./pages/Warehouse'));
 
 const PageLoader = () => (
   <div className="min-h-screen flex items-center justify-center bg-slate-50 dark:bg-slate-950">
@@ -100,7 +101,16 @@ const App = () => {
                 }
               />
 
-              {/* Catch all */}
+              {/* Protected: Warehouse Management */}
+              <Route
+                path="/warehouses"
+                element={
+                  <ProtectedRoute allowedRoles={['inventory_manager', 'warehouse_staff']}>
+                    <Warehouse />
+                  </ProtectedRoute>
+                }
+              />
+
               <Route path="*" element={<Navigate to="/auth" replace />} />
             </Routes>
           </Suspense>

@@ -10,12 +10,19 @@ const generateReference = (prefix) => {
 const validateStock = async (products, isDeduction) => {
   for (const item of products) {
     const product = await Product.findById(item.product);
-    if (!product) throw new Error(`Product not found`);
+    if (!product) {
+      const err = new Error(`Product not found`);
+      err.status = 400;
+      throw err;
+    }
     if (isDeduction && product.stock < item.quantity) {
-      throw new Error(`Insufficient stock for ${product.name}`);
+      const err = new Error(`Insufficient stock for "${product.name}". Available: ${product.stock}, Requested: ${item.quantity}`);
+      err.status = 400;
+      throw err;
     }
   }
 };
+
 
 const updateStock = async (products, multiplier) => {
   for (const item of products) {
@@ -91,7 +98,11 @@ exports.createDelivery = async (req, res, next) => {
       reference: generateReference('DEL')
     });
     res.status(201).json({ success: true, data: delivery });
-  } catch (error) { next(error); }
+  } catch (error) {
+    // Return 400 for stock/validation errors, 500 for unexpected
+    const status = error.status || 500;
+    return res.status(status).json({ success: false, message: error.message || 'Failed to create delivery' });
+  }
 };
 
 exports.updateDelivery = async (req, res, next) => {
@@ -113,7 +124,10 @@ exports.validateDelivery = async (req, res, next) => {
     await delivery.save();
     
     res.status(200).json({ success: true, data: delivery });
-  } catch (error) { next(error); }
+  } catch (error) {
+    const status = error.status || 500;
+    return res.status(status).json({ success: false, message: error.message || 'Failed to validate delivery' });
+  }
 };
 
 // ================= ADJUSTMENTS =================

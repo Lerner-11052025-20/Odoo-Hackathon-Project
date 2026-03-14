@@ -8,6 +8,7 @@ const OperationModal = ({ isOpen, onClose, type, onSubmit }) => {
   const [loading, setLoading] = useState(false);
   const [fetchingProducts, setFetchingProducts] = useState(false);
   const [availableProducts, setAvailableProducts] = useState([]);
+  const [submitError, setSubmitError] = useState('');
   
   // Dynamic fields
   const [formData, setFormData] = useState({
@@ -35,6 +36,7 @@ const OperationModal = ({ isOpen, onClose, type, onSubmit }) => {
         scheduledDate: new Date().toISOString().split('T')[0]
       });
       setSelectedProducts([]);
+      setSubmitError('');
     }
   }, [isOpen]);
 
@@ -89,6 +91,7 @@ const OperationModal = ({ isOpen, onClose, type, onSubmit }) => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setSubmitError('');
     if (selectedProducts.length === 0) {
       return toast.error('Please add at least one product');
     }
@@ -125,7 +128,9 @@ const OperationModal = ({ isOpen, onClose, type, onSubmit }) => {
       await onSubmit(payload);
       onClose(); // Auto close on complete
     } catch (error) {
-      // Handled by hook
+      const msg = error.message || 'Failed to create. Please try again.';
+      setSubmitError(msg);
+      toast.error(msg);
     } finally {
       setLoading(false);
     }
@@ -165,6 +170,14 @@ const OperationModal = ({ isOpen, onClose, type, onSubmit }) => {
           {/* Form Body */}
           <div className="p-6 overflow-y-auto custom-scrollbar flex-1">
             <form id="opForm" onSubmit={handleSubmit} className="space-y-6">
+              
+              {/* Error Banner */}
+              {submitError && (
+                <div className="flex items-start gap-2 p-3 rounded-xl bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-500/20 text-red-700 dark:text-red-400 text-sm">
+                  <span className="shrink-0 font-bold">⚠</span>
+                  <span>{submitError}</span>
+                </div>
+              )}
               
               {/* Top Info Section */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
