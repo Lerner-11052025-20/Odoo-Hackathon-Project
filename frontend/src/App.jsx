@@ -8,6 +8,7 @@ import { Loader2 } from 'lucide-react';
 // Lazy load pages for code splitting
 const AuthPage = lazy(() => import('./pages/AuthPage'));
 const Dashboard = lazy(() => import('./pages/Dashboard'));
+const Stock = lazy(() => import('./pages/Stock'));
 
 const PageLoader = () => (
   <div className="min-h-screen flex items-center justify-center bg-slate-50 dark:bg-slate-950">
@@ -47,6 +48,16 @@ const App = () => {
                 element={
                   <ProtectedRoute allowedRoles={['warehouse_staff']}>
                     <Dashboard />
+                  </ProtectedRoute>
+                }
+              />
+
+              {/* Protected: Stock (Products) Management */}
+              <Route
+                path="/products"
+                element={
+                  <ProtectedRoute allowedRoles={['inventory_manager', 'warehouse_staff']}>
+                    <Stock />
                   </ProtectedRoute>
                 }
               />
