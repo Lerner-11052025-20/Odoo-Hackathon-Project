@@ -109,25 +109,11 @@ const Dashboard = () => {
 
         {/* Charts & Operations Row */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {isManager ? (
-            <InventoryCharts data={activity || []} />
-          ) : (
-            <div className="lg:col-span-2 space-y-6">
-              <OperationsSummary 
-                pendingReceipts={kpis?.pendingReceipts.value} 
-                pendingDeliveries={kpis?.pendingDeliveries.value} 
-              />
-            </div>
-          )}
-          
-          {isManager ? (
-             <OperationsSummary 
-             pendingReceipts={kpis?.pendingReceipts.value} 
-             pendingDeliveries={kpis?.pendingDeliveries.value} 
-           />
-          ) : (
-             <InventoryCharts data={activity || []} />
-          )}
+          <InventoryCharts data={activity || []} />
+          <OperationsSummary 
+            receiptData={kpis?.pendingReceipts} 
+            deliveryData={kpis?.pendingDeliveries} 
+          />
         </div>
 
         {/* Recent Operations Table Row */}

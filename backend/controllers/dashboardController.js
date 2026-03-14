@@ -1,24 +1,48 @@
 const Product = require('../models/Product');
+const Receipt = require('../models/Receipt');
+const Delivery = require('../models/Delivery');
+const Adjustment = require('../models/Adjustment');
 
 exports.getKPIs = async (req, res, next) => {
   try {
-    // Aggregate real data from Product model
     const totalProducts = await Product.countDocuments();
     const lowStock = await Product.countDocuments({ stock: { $gt: 0, $lte: 20 } });
     const outOfStock = await Product.countDocuments({ stock: { $lte: 0 } });
 
-    // Calculate Products added in the last 24h as 'Receipts' for Operations Summary
-    const oneDayAgo = new Date();
-    oneDayAgo.setDate(oneDayAgo.getDate() - 1);
-    const recentReceipts = await Product.countDocuments({ createdAt: { $gte: oneDayAgo } });
+    // Real counts for Operations Summary
+    const pendingReceipts = await Receipt.countDocuments({ status: { $in: ['Waiting', 'Ready'] } });
+    const completedReceipts = await Receipt.countDocuments({ status: 'Done' });
+    
+    const pendingDeliveries = await Delivery.countDocuments({ status: { $in: ['Waiting', 'Ready'] } });
+    const completedDeliveries = await Delivery.countDocuments({ status: 'Done' });
+    
+    const internalTransfers = await Adjustment.countDocuments({ status: { $in: ['Draft', 'Validated'] } });
+
+    // Late Deliveries (Mock for now as we don't have strict scheduling comparison, or check if scheduledDate < today)
+    const today = new Date();
+    const lateDeliveries = await Delivery.countDocuments({ 
+      status: { $in: ['Waiting', 'Ready'] },
+      scheduledDate: { $lt: today }
+    });
 
     const kpis = {
-      totalProducts: { value: totalProducts, trend: totalProducts > 0 ? 5 : 0, status: totalProducts > 0 ? 'up' : 'neutral' },
-      lowStock: { value: lowStock, trend: lowStock > 0 ? -1 : 0, status: lowStock > 0 ? 'down' : 'neutral' },
-      outOfStock: { value: outOfStock, trend: 0, status: outOfStock > 0 ? 'down' : 'neutral' },
-      pendingReceipts: { value: recentReceipts, trend: recentReceipts > 0 ? 2 : 0, status: recentReceipts > 0 ? 'up' : 'neutral' },
-      pendingDeliveries: { value: 14, trend: 4, status: 'up' },     // Mock until Operations Delivery module exists
-      internalTransfers: { value: 5, trend: 0, status: 'neutral' }  // Mock until Operations Transfer module exists
+      totalProducts: { value: totalProducts, trend: 5, status: 'up' },
+      lowStock: { value: lowStock, trend: -1, status: 'down' },
+      outOfStock: { value: outOfStock, trend: 0, status: 'neutral' },
+      pendingReceipts: { 
+        value: pendingReceipts, 
+        completed: completedReceipts,
+        trend: 2, 
+        status: 'up' 
+      },
+      pendingDeliveries: { 
+        value: pendingDeliveries, 
+        completed: completedDeliveries,
+        late: lateDeliveries,
+        trend: 4, 
+        status: 'up' 
+      },
+      internalTransfers: { value: internalTransfers, trend: 0, status: 'neutral' }
     };
     
     res.status(200).json({ success: true, data: kpis });
@@ -31,8 +55,8 @@ exports.getActivity = async (req, res, next) => {
   try {
     const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
     const today = new Date();
+    today.setHours(23, 59, 59, 999);
     
-    // Initialize last 7 days
     const activityData = [];
     for (let i = 6; i >= 0; i--) {
       const d = new Date(today);
@@ -41,25 +65,43 @@ exports.getActivity = async (req, res, next) => {
         name: days[d.getDay()],
         dateStr: d.toISOString().split('T')[0],
         in: 0,
-        out: Math.floor(Math.random() * 20), // Mock outgoing Deliveries for visual purposes
+        out: 0,
         amt: 0
       });
     }
 
-    // Fetch products created in the last 7 days
     const sevenDaysAgo = new Date();
     sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 6);
     sevenDaysAgo.setHours(0, 0, 0, 0);
 
-    const recentProducts = await Product.find({ createdAt: { $gte: sevenDaysAgo } });
+    // Fetch Done Receipts in last 7 days
+    const receipts = await Receipt.find({ 
+      status: 'Done', 
+      updatedAt: { $gte: sevenDaysAgo } 
+    });
 
-    recentProducts.forEach(p => {
-      const pDate = new Date(p.createdAt).toISOString().split('T')[0];
-      const targetDay = activityData.find(d => d.dateStr === pDate);
+    receipts.forEach(r => {
+      const rDate = new Date(r.updatedAt).toISOString().split('T')[0];
+      const targetDay = activityData.find(d => d.dateStr === rDate);
       if (targetDay) {
-        // Add the stock to the incoming chart line
-        targetDay.in += (p.stock || 1);
-        targetDay.amt += (p.stock || 1);
+        const totalQty = r.products.reduce((acc, p) => acc + (p.quantity || 0), 0);
+        targetDay.in += totalQty;
+        targetDay.amt += totalQty;
+      }
+    });
+
+    // Fetch Done Deliveries in last 7 days
+    const deliveries = await Delivery.find({ 
+      status: 'Done', 
+      updatedAt: { $gte: sevenDaysAgo } 
+    });
+
+    deliveries.forEach(d => {
+      const dDate = new Date(d.updatedAt).toISOString().split('T')[0];
+      const targetDay = activityData.find(day => day.dateStr === dDate);
+      if (targetDay) {
+        const totalQty = d.products.reduce((acc, p) => acc + (p.quantity || 0), 0);
+        targetDay.out += totalQty;
       }
     });
 
@@ -71,20 +113,46 @@ exports.getActivity = async (req, res, next) => {
 
 exports.getRecentOperations = async (req, res, next) => {
   try {
-    // Fetch latest 6 products added to simulate recent operations (Receipts) for the Dashboard
-    const recentProducts = await Product.find().sort({ createdAt: -1 }).limit(6);
-    
-    const recentOperations = recentProducts.map(p => ({
-      id: `REC-${p.sku.substring(0, 5)}`,
+    const [receipts, deliveries, adjustments] = await Promise.all([
+      Receipt.find().sort({ createdAt: -1 }).limit(3).populate('products.product', 'name'),
+      Delivery.find().sort({ createdAt: -1 }).limit(3).populate('products.product', 'name'),
+      Adjustment.find().sort({ createdAt: -1 }).limit(3).populate('products.product', 'name')
+    ]);
+
+    const formattedReceipts = receipts.map(r => ({
+      id: r.reference,
       type: 'Receipt',
-      product: p.name,
-      warehouse: p.warehouse,
-      quantity: p.stock,
-      status: 'Done',
-      timestamp: p.createdAt || new Date()
+      product: r.products[0]?.product?.name || 'Multiple Products',
+      warehouse: r.warehouse,
+      quantity: r.products.reduce((acc, p) => acc + p.quantity, 0),
+      status: r.status,
+      timestamp: r.createdAt
     }));
 
-    // Return the generated operations list
+    const formattedDeliveries = deliveries.map(d => ({
+      id: d.reference,
+      type: 'Delivery',
+      product: d.products[0]?.product?.name || 'Multiple Products',
+      warehouse: d.warehouse,
+      quantity: d.products.reduce((acc, p) => acc + p.quantity, 0),
+      status: d.status,
+      timestamp: d.createdAt
+    }));
+
+    const formattedAdjustments = adjustments.map(a => ({
+      id: a.reference,
+      type: 'Adjustment',
+      product: a.products[0]?.product?.name || 'Adjustment',
+      warehouse: a.warehouse,
+      quantity: a.products.length,
+      status: a.status,
+      timestamp: a.createdAt
+    }));
+
+    const recentOperations = [...formattedReceipts, ...formattedDeliveries, ...formattedAdjustments]
+      .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp))
+      .slice(0, 8);
+
     res.status(200).json({ success: true, data: recentOperations });
   } catch (error) {
     next(error);
