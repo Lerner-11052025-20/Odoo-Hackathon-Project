@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
 import { Package, BarChart3, Truck, ArrowLeftRight, Moon, Sun } from 'lucide-react';
 import Login from '../components/Auth/Login';
@@ -19,8 +20,16 @@ const features = [
 
 const AuthPage = () => {
   const { isDark, toggleTheme } = useTheme();
+  const location = useLocation();
   const [view, setView] = useState(VIEWS.LOGIN);
   const [resetEmail, setResetEmail] = useState('');
+
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const mode = params.get('mode');
+    if (mode === 'signup') setView(VIEWS.SIGNUP);
+    else if (mode === 'login') setView(VIEWS.LOGIN);
+  }, [location]);
 
   const handleOTPSent = (email) => {
     setResetEmail(email);

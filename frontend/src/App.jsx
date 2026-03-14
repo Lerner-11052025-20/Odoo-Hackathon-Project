@@ -18,6 +18,7 @@ const Warehouse   = lazy(() => import('./pages/Warehouse'));
 const Locations   = lazy(() => import('./pages/Locations'));
 const Profile     = lazy(() => import('./pages/Profile'));
 const MoveHistory = lazy(() => import('./pages/MoveHistory'));
+const Home        = lazy(() => import('./pages/Home'));
 
 const PageLoader = () => (
   <div className="min-h-screen flex items-center justify-center bg-slate-50 dark:bg-slate-950">
@@ -35,8 +36,8 @@ const App = () => {
         <BrowserRouter>
           <Suspense fallback={<PageLoader />}>
             <Routes>
-              {/* Default: redirect to auth */}
-              <Route path="/" element={<Navigate to="/auth" replace />} />
+              {/* Public: Landing Page */}
+              <Route path="/" element={<Home />} />
 
               {/* Auth Page */}
               <Route path="/auth" element={<AuthPage />} />
