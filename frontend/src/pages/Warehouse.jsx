@@ -11,6 +11,11 @@ import WarehouseTable from '../components/Warehouse/WarehouseTable';
 import AddWarehouseModal from '../components/Warehouse/AddWarehouseModal';
 import WarehouseDetails from '../components/Warehouse/WarehouseDetails';
 import { AnimatePresence } from 'framer-motion';
+import ChartContainer from '../components/Charts/ChartContainer';
+import InventoryPieChart from '../components/Charts/InventoryPieChart';
+import WarehouseBarChart from '../components/Charts/WarehouseBarChart';
+import { useAnalytics } from '../hooks/useAnalytics';
+import { useMemo } from 'react';
 
 /* ── Delete Confirm Dialog ─────────────────── */
 const DeleteConfirm = ({ warehouse, onConfirm, onCancel, loading }) => (
@@ -63,7 +68,30 @@ const Warehouse = () => {
   const [deleteTarget, setDeleteTarget] = useState(null);
   const [deleting, setDeleting]         = useState(false);
 
-  useEffect(() => { fetchWarehouses(); }, [fetchWarehouses]);
+  const { reportData, fetchAnalytics } = useAnalytics();
+
+  useEffect(() => { 
+    fetchWarehouses(); 
+    fetchAnalytics('warehouse');
+  }, [fetchWarehouses, fetchAnalytics]);
+
+  const warehouseStockData = useMemo(() => {
+    if (!reportData?.warehouseStock) return [];
+    return reportData.warehouseStock.map(w => ({
+       name: w.name,
+       value: w.stock
+    }));
+  }, [reportData]);
+
+  const activeWarehouseData = useMemo(() => {
+    if (!reportData?.activeWarehouses) return [];
+    const colors = ['#6366f1', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6'];
+    return reportData.activeWarehouses.map((w, i) => ({
+       name: w.name,
+       value: w.value,
+       color: colors[i % colors.length]
+    }));
+  }, [reportData]);
 
   const handleSearch = useCallback((val) => {
     setSearch(val);
@@ -170,6 +198,17 @@ const Warehouse = () => {
               <p className="text-xs text-slate-500 dark:text-slate-400 font-medium mt-0.5">{s.label}</p>
             </motion.div>
           ))}
+        </div>
+
+        {/* ── Warehouse Analytics ── */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+           <ChartContainer title="Global Stock Distribution" subtitle="Items per warehouse node">
+              <WarehouseBarChart data={warehouseStockData} />
+           </ChartContainer>
+
+           <ChartContainer title="Node Activity Levels" subtitle="Movement frequency by warehouse">
+              <InventoryPieChart data={activeWarehouseData} />
+           </ChartContainer>
         </div>
 
         {/* ── Warehouse Table ── */}

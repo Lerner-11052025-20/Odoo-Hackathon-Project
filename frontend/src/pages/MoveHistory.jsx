@@ -7,11 +7,30 @@ import MoveKanban from '../components/MoveHistory/MoveKanban';
 import MoveFilters from '../components/MoveHistory/MoveFilters';
 import { useMoves } from '../hooks/useMoves';
 import api from '../utils/api';
+import ChartContainer from '../components/Charts/ChartContainer';
+import InventoryPieChart from '../components/Charts/InventoryPieChart';
+import MovementLineChart from '../components/Charts/MovementLineChart';
+import { useAnalytics } from '../hooks/useAnalytics';
+import { useMemo } from 'react';
 
 const MoveHistory = () => {
   const { moves, isLoading, filters, setFilters } = useMoves();
   const [viewMode, setViewMode] = useState('list');
   const [warehouses, setWarehouses] = useState([]);
+
+  const { reportData, fetchAnalytics } = useAnalytics();
+
+  useEffect(() => {
+    fetchAnalytics('movement');
+  }, [fetchAnalytics]);
+
+  const trendData = useMemo(() => {
+    if (!reportData?.dailyTrends) return [];
+    return reportData.dailyTrends.map(d => ({
+       name: d.date,
+       RECEIPT: d.count // Just mapping to RECEIPT for generic trend visualization in this context
+    }));
+  }, [reportData]);
 
   useEffect(() => {
     const fetchWarehouses = async () => {
@@ -76,6 +95,17 @@ const MoveHistory = () => {
               <FileJson size={18} />
             </button>
           </div>
+        </div>
+
+        {/* Movement Analytics Row */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <ChartContainer title="Movement Type Breakdown" subtitle="Audit log distribution" className="lg:col-span-1">
+                 <InventoryPieChart data={reportData?.typeDistribution || []} />
+            </ChartContainer>
+
+            <ChartContainer title="Daily Ledger Activity" subtitle="Total stock updates over time" className="lg:col-span-2">
+                 <MovementLineChart data={trendData} />
+            </ChartContainer>
         </div>
 
         {/* Filters */}

@@ -13,6 +13,7 @@ const transferRoutes   = require('./routes/transferRoutes');
 const userRoutes       = require('./routes/userRoutes');
 const notificationRoutes = require('./routes/notificationRoutes');
 const moveRoutes         = require('./routes/moveRoutes');
+const analyticsRoutes    = require('./routes/analyticsRoutes');
 
 dotenv.config();
 
@@ -41,6 +42,7 @@ app.use('/api/transfers',  transferRoutes);
 app.use('/api/users',      userRoutes);
 app.use('/api/notifications', notificationRoutes);
 app.use('/api/moves',      moveRoutes);
+app.use('/api/analytics',  analyticsRoutes);
 
 // Health Check
 app.get('/api/health', (req, res) => {

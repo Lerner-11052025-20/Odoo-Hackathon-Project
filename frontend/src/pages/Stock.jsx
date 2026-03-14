@@ -9,6 +9,10 @@ import ProductFilters from '../components/Stock/ProductFilters';
 import ProductTable from '../components/Stock/ProductTable';
 import AddProductModal from '../components/Stock/AddProductModal';
 import EditProductModal from '../components/Stock/EditProductModal';
+import ChartContainer from '../components/Charts/ChartContainer';
+import InventoryPieChart from '../components/Charts/InventoryPieChart';
+import WarehouseBarChart from '../components/Charts/WarehouseBarChart';
+import { useAnalytics } from '../hooks/useAnalytics';
 
 const Stock = () => {
   const { user } = useAuth();
@@ -23,9 +27,20 @@ const Stock = () => {
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState(null);
 
+  const { reportData, fetchAnalytics } = useAnalytics();
+
   useEffect(() => {
     fetchProducts();
-  }, [fetchProducts]);
+    fetchAnalytics('stock');
+  }, [fetchProducts, fetchAnalytics]);
+
+  const stockBarData = useMemo(() => {
+    if (!reportData?.topProducts) return [];
+    return reportData.topProducts.map(p => ({
+       name: p.name,
+       value: p.stock
+    }));
+  }, [reportData]);
 
   const filteredProducts = useMemo(() => {
     return products.filter((p) => {
@@ -80,6 +95,17 @@ const Stock = () => {
               <Plus size={18} /> Add Product
             </button>
           )}
+        </div>
+
+        {/* Analytics Row */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+           <ChartContainer title="Category Distribution" subtitle="Stock by Product Category">
+             <InventoryPieChart data={reportData?.categoryDistribution || []} />
+           </ChartContainer>
+           
+           <ChartContainer title="Top Inventory Items" subtitle="Highest Volume SKU Quantities">
+             <WarehouseBarChart data={stockBarData} />
+           </ChartContainer>
         </div>
 
         {/* Filters Bar */}
