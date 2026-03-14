@@ -6,6 +6,7 @@ const connectDB = require('./config/db');
 const authRoutes = require('./routes/authRoutes');
 const dashboardRoutes = require('./routes/dashboardRoutes');
 const productRoutes = require('./routes/productRoutes');
+const operationsRoutes = require('./routes/operationsRoutes');
 
 dotenv.config();
 
@@ -27,6 +28,7 @@ app.use(cookieParser());
 app.use('/api/auth', authRoutes);
 app.use('/api/dashboard', dashboardRoutes);
 app.use('/api/products', productRoutes);
+app.use('/api', operationsRoutes); // Registers /api/receipts /api/deliveries /api/adjustments
 
 // Health Check
 app.get('/api/health', (req, res) => {
